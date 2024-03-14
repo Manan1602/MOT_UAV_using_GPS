@@ -2,6 +2,7 @@ import cv2
 import glob
 from pathlib import Path
 import numpy as np
+import pandas as pd
 import os
 
 img_formats = ['bmp', 'jpg', 'jpeg', 'png', 'tif', 'tiff', 'dng', 'webp', 'mpo']
@@ -53,11 +54,13 @@ class LoadImages:  # for inference
 
         images = [x for x in files if x.split('.')[-1].lower() in img_formats]
         videos = [x for x in files if x.split('.')[-1].lower() in vid_formats]
+        gps = [i for i in files if '_gps.txt' in i]
         ni, nv = len(images), len(videos)
 
         self.img_size = img_size
         self.stride = stride
         self.files = images + videos
+        self.gps_files = gps
         self.nf = ni + nv  # number of files
         self.video_flag = [False] * ni + [True] * nv
         self.mode = 'image'
@@ -76,6 +79,7 @@ class LoadImages:  # for inference
         if self.count == self.nf:
             raise StopIteration
         path = self.files[self.count]
+        gps_info = pd.read_csv(self.gps_files[self.count])
 
         if self.video_flag[self.count]:
             # Read video
@@ -108,4 +112,4 @@ class LoadImages:  # for inference
         img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
         img = np.ascontiguousarray(img)
 
-        return path, img, img0, self.cap
+        return path, img, img0, gps_info, self.cap
