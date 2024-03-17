@@ -51,10 +51,12 @@ class LoadImages:  # for inference
             files = [p]  # files
         else:
             raise Exception(f'ERROR: {p} does not exist')
-
+# files = [os.path.join(p,i) for i in sorted([i for i in os.listdir(p)], key=lambda i: int(i[:-4]))]
         images = [x for x in files if x.split('.')[-1].lower() in img_formats]
+        images = [i for i in sorted(images, key= lambda i:int(i.split('.')[0].split('\\')[-1]))]
         videos = [x for x in files if x.split('.')[-1].lower() in vid_formats]
-        gps = [i for i in files if '_gps.txt' in i]
+        gps = [i for i in files if '.txt' in i]
+        gps = [i for i in sorted(gps, key = lambda i : int(i.split('.')[0].split('\\')[-1]))]
         ni, nv = len(images), len(videos)
 
         self.img_size = img_size

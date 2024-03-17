@@ -78,7 +78,7 @@ def absolute_coordinates(img_shape,r: float,h:float,f:float,B:float, x_det: list
     '''
     B = np.deg2rad(B)
     r = np.deg2rad(r)
-    
+    h = h/1000 # meters  to kilometers
     R = radius_earth(la)
     x_center = img_shape[1]/2
     y_center = img_shape[0]/2

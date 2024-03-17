@@ -60,7 +60,7 @@ def run(yolo_weights,img_dir,img_size,save_dir,show_vid=False,save_vid = False,c
                 x_center = x_center.detach().cpu().numpy()
                 y_center = (det[:,1]+det[:,3])/2
                 y_center = y_center.detach().cpu().numpy()
-                gps_coords = absolute_coordinates(im1.shape,gps_info['gimbal_heading'].to_numpy(),gps_info['altitude'].to_numpy(),15,gps_info['gimbal_pitch'].to_numpy(), x_center, y_center, gps_info['gps_latitude'].to_numpy(), gps_info['gps_longitude'].to_numpy())
+                gps_coords = absolute_coordinates(im1.shape,gps_info['gimbal_heading'].to_numpy(),gps_info['altitude'].to_numpy(),12.5,gps_info['gimbal_pitch'].to_numpy(), x_center, y_center, gps_info['gps_latitude'].to_numpy(), gps_info['gps_longitude'].to_numpy())
                 print(gps_info['gimbal_heading'].to_numpy())
                 print(len(gps_coords))
                 print(gps_coords)

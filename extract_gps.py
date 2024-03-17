@@ -11,9 +11,11 @@ def extract_gps(phase :str):
     print(df['meta'][0])
     for i in tqdm(range(len(df))):
         df1 = pd.DataFrame(df.loc[i,'meta'], index = [0])
-        # df1.to_csv(f'Compressed/{phase}/{df.loc[i,'video_id']}/{df.loc[i,'id']}_gps.txt', index = False)
-        break
+        df1.to_csv(f'Compressed/{phase}/{df.loc[i,'video_id']}/{df.loc[i,'id']}.txt', index = False)
+
 phase = ['train','val']
 
-df = pd.read_csv('Compressed/val/0/267_gps.txt')
-extract_gps('train')
+# df = pd.read_csv('Compressed/val/0/267_gps.txt')
+for i in phase:
+    print(i)
+    extract_gps(i)
