@@ -63,7 +63,7 @@ def radius_earth(la: float):
     e = 0.0818 #eccentricity of earth ellipsoid
     return 6378*np.sqrt((1-(2*(e**2)-(e**4))*np.sin(np.deg2rad(la))**2)/(1-(e**2 * np.sin(np.deg2rad(la))**2)))
 
-def absolute_coordinates(img_shape,r: float,h:float,f:float,B:float, x_det: list[float],y_det: list[float], la:float, lo: float):
+def absolute_coordinates(img_shape,r: float,h:float,B:float, x_det: list[float],y_det: list[float], la:float, lo: float,f:float = 12.5):
     '''
     h: vertical ground distance of the drone
     B: gimbal pitch
