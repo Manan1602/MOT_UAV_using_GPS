@@ -44,6 +44,7 @@ GPS data for each frame must be stored in a .txt file in the same directory name
 
 The txt file should be comma seperated and have values in the following format:
 >gps_latitude,gps_latitude_ref,gps_longitude,gps_longitude_ref,altitude,gimbal_pitch,camera_heading,gimbal_heading,focal_length
+>
 >47.671755,N,9.269907,E,11.299448948491314,45.4,319.3,322.4,15
 
 Note that even if your data has some additional headings, it's fine to have them too as long as above mentioned headings are present.
