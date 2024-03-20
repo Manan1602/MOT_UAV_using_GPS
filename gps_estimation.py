@@ -65,6 +65,7 @@ def radius_earth(la: float):
 
 def absolute_coordinates(img_shape,r: float,h:float,B:float, x_det: list[float],y_det: list[float], la:float, lo: float,f:float = 12.5):
     '''
+    img_shape: image.shape (y,x,3)
     h: vertical ground distance of the drone
     B: gimbal pitch
     f: focal length
@@ -90,17 +91,17 @@ def absolute_coordinates(img_shape,r: float,h:float,B:float, x_det: list[float],
     return [(i,j) for i,j in zip(la_obj, lo_obj)]
 
 
-import json
-import pandas as pd
+# import json
+# import pandas as pd
 
-with open('annotations/instances_train_objects_in_water.json') as f:
-    data = json.load(f)
-print(data.keys())
-df = pd.DataFrame.from_dict(data['images'])
-print(df['meta'][0])
-print(np.arctan(1))
-print(np.tan(90 - np.arctan(1)))
-# # gps_latitude': 47.671755, 'gps_latitude_ref': 'N', 
+# with open('annotations/instances_train_objects_in_water.json') as f:
+#     data = json.load(f)
+# print(data.keys())
+# df = pd.DataFrame.from_dict(data['images'])
+# print(df['meta'][0])
+# print(np.arctan(1))
+# print(np.tan(90 - np.arctan(1)))
+# # # gps_latitude': 47.671755, 'gps_latitude_ref': 'N', 
 # 'gps_longitude': 9.269907, 'gps_longitude_ref': 'E', 
 # # 'altitude': 11.299448948491314, 'gimbal_pitch': 45.4, 
 # 'compass_heading': 319.3, 'gimbal_heading': 322.4, 

@@ -24,6 +24,8 @@ class Tracker:
     ----------
     metric : nn_matching.NearestNeighborDistanceMetric
         The distance metric used for measurement to track association.
+    metric_pos : nn_matching.NearestNeighborDistanceMetric
+        The distance metric used for measurement to track association for position.
     max_age : int
         Maximum number of missed misses before a track is deleted.
     n_init : int
@@ -33,10 +35,11 @@ class Tracker:
     tracks : List[Track]
         The list of active tracks at the current time step.
     """
-    GATING_THRESHOLD = np.sqrt(kalman_filter.chi2inv95[4])
+    GATING_THRESHOLD = np.sqrt(kalman_filter.chi2inv95[2])
 
-    def __init__(self, metric, max_iou_distance=0.9, max_age=30, n_init=3, _lambda=0, ema_alpha=0.9, mc_lambda=0.995):
+    def __init__(self, metric, metric_pos, max_iou_distance=0.9, max_age=30, n_init=3, _lambda=0.3, ema_alpha=0.9, mc_lambda=0.995):
         self.metric = metric
+        self.metric_pos = metric_pos
         self.max_iou_distance = max_iou_distance
         self.max_age = max_age
         self.n_init = n_init
@@ -90,13 +93,15 @@ class Tracker:
 
         # Update distance metric.
         active_targets = [t.track_id for t in self.tracks if t.is_confirmed()]
-        features, targets = [], []
+        features, targets,gps = [], [],[]
         for track in self.tracks:
             if not track.is_confirmed():
                 continue
             features += track.features
             targets += [track.track_id for _ in track.features]
+            gps += [track.gps for _ in track.features]
         self.metric.partial_fit(np.asarray(features), np.asarray(targets), active_targets)
+        self.metric_pos.partial_fit(np.asarray(gps),np.asarray(targets), active_targets)
 
     def _full_cost_metric(self, tracks, dets, track_indices, detection_indices):
         """
@@ -110,25 +115,40 @@ class Tracker:
         Note also that the authors work with the squared distance. I also sqrt this, so that it
         is more intuitive in terms of values.
         """
+        #gps coords here
         # Compute First the Position-based Cost Matrix
-        pos_cost = np.empty([len(track_indices), len(detection_indices)])
-        msrs = np.asarray([dets[i].to_xyah() for i in detection_indices])
+        pos_cost = np.zeros([len(track_indices), len(detection_indices)])
+        msrs = np.asarray([dets[i].gps_coords for i in detection_indices])
         for row, track_idx in enumerate(track_indices):
             pos_cost[row, :] = np.sqrt(
                 self.kf.gating_distance(
-                    tracks[track_idx].mean, tracks[track_idx].covariance, msrs, False
+                    tracks[track_idx].mean, tracks[track_idx].covariance, msrs, True
                 )
             ) / self.GATING_THRESHOLD
-        pos_gate = pos_cost > 1.0
+        pos_cost = self.metric_pos.distance(
+            np.array([dets[i].gps_coords for i in detection_indices]),
+            np.array([tracks[i].track_id for i in track_indices]),
+        )
+        pos_cost = pos_cost*1e9
+        pos_gate = pos_cost > self.metric_pos.matching_threshold
+        # pos_gate = pos_cost > 1.0
+        for i in pos_cost:
+            print(i)
+        print('--------------')
         # Now Compute the Appearance-based Cost Matrix
         app_cost = self.metric.distance(
             np.array([dets[i].feature for i in detection_indices]),
             np.array([tracks[i].track_id for i in track_indices]),
         )
         app_gate = app_cost > self.metric.matching_threshold
+        for i in app_cost:
+            print(i)
+        print('---------')
         # Now combine and threshold
         cost_matrix = self._lambda * pos_cost + (1 - self._lambda) * app_cost
         cost_matrix[np.logical_or(pos_gate, app_gate)] = linear_assignment.INFTY_COST
+        for i in cost_matrix:
+            print(i)
         # Return Matrix
         return cost_matrix
 
@@ -151,7 +171,7 @@ class Tracker:
         # Associate confirmed tracks using appearance features.
         matches_a, unmatched_tracks_a, unmatched_detections = \
             linear_assignment.matching_cascade(
-                gated_metric, self.metric.matching_threshold, self.max_age,
+                self._full_cost_metric, self.metric.matching_threshold, self.max_age,
                 self.tracks, detections, confirmed_tracks)
 
         # Associate remaining tracks together with unconfirmed tracks using IOU.
@@ -172,6 +192,6 @@ class Tracker:
 
     def _initiate_track(self, detection, class_id, conf):
         self.tracks.append(Track(
-            detection.to_xyah(), self._next_id, class_id, conf, self.n_init, self.max_age, self.ema_alpha,
+            detection.to_xyah(), self._next_id, class_id, conf, self.n_init, self.max_age, self.ema_alpha,detection.gps_coords,
             detection.feature))
         self._next_id += 1

@@ -30,7 +30,8 @@ ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
 
 
 from yolov7.models.experimental import attempt_load
-from yolov7.utils.datasets import LoadImages, LoadStreams
+from yolov7.utils.datasets import LoadStreams
+from custom_dataloader import LoadImages
 from yolov7.utils.general import (check_img_size, non_max_suppression, scale_coords, check_requirements, cv2,
                                   check_imshow, xyxy2xywh, increment_path, strip_optimizer, colorstr, check_file)
 from yolov7.utils.torch_utils import select_device, time_synchronized
@@ -129,6 +130,7 @@ def run(
                 device,
                 half,
                 max_dist=cfg.STRONGSORT.MAX_DIST,
+                max_dist_pos = cfg.STRONGSORT.MAX_DIST_POS,
                 max_iou_distance=cfg.STRONGSORT.MAX_IOU_DISTANCE,
                 max_age=cfg.STRONGSORT.MAX_AGE,
                 n_init=cfg.STRONGSORT.N_INIT,
@@ -146,7 +148,7 @@ def run(
     # Run tracking
     dt, seen = [0.0, 0.0, 0.0, 0.0], 0
     curr_frames, prev_frames = [None] * nr_sources, [None] * nr_sources
-    for frame_idx, (path, im, im0s, vid_cap) in enumerate(dataset):
+    for frame_idx, (path, im, im0s,gps_info, vid_cap) in enumerate(dataset):
         s = ''
         t1 = time_synchronized()
         im = torch.from_numpy(im).to(device)
@@ -212,7 +214,7 @@ def run(
 
                 # pass detections to strongsort
                 t4 = time_synchronized()
-                outputs[i] = strongsort_list[i].update(xywhs.cpu(), confs.cpu(), clss.cpu(), im0)
+                outputs[i] = strongsort_list[i].update(xywhs.cpu(),gps_info, confs.cpu(), clss.cpu(), im0)
                 t5 = time_synchronized()
                 dt[3] += t5 - t4
 
@@ -253,11 +255,12 @@ def run(
 
             # Stream results
             if show_vid:
-                cv2.imshow(str(p), im0)
+                cv2.imshow('vid', cv2.resize(im0,(1200,800)))
                 cv2.waitKey(1)  # 1 millisecond
 
             # Save results (image with detections)
             if save_vid:
+                # im0 = cv2.resize(im0,(1200,800))
                 if vid_path[i] != save_path:  # new video
                     vid_path[i] = save_path
                     if isinstance(vid_writer[i], cv2.VideoWriter):

@@ -66,7 +66,7 @@ class Track:
 
     """
 
-    def __init__(self, detection, track_id, class_id, conf, n_init, max_age, ema_alpha,
+    def __init__(self, detection, track_id, class_id, conf, n_init, max_age, ema_alpha, gps,
                  feature=None):
         self.track_id = track_id
         self.class_id = int(class_id)
@@ -77,6 +77,7 @@ class Track:
 
         self.state = TrackState.Tentative
         self.features = []
+        self.gps = gps
         if feature is not None:
             feature /= np.linalg.norm(feature)
             self.features.append(feature)

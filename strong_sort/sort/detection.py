@@ -14,6 +14,8 @@ class Detection(object):
         Detector confidence score.
     feature : array_like
         A feature vector that describes the object contained in this image.
+    gps_coords: array_like
+        Estimated GPS coordinates of the objects in the image
 
     Attributes
     ----------
@@ -26,10 +28,11 @@ class Detection(object):
 
     """
 
-    def __init__(self, tlwh, confidence, feature):
+    def __init__(self, tlwh, confidence, feature, gps_coords):
         self.tlwh = np.asarray(tlwh, dtype=np.float32)
         self.confidence = float(confidence)
         self.feature = np.asarray(feature.cpu(), dtype=np.float32)
+        self.gps_coords = gps_coords
 
     def to_tlbr(self):
         """Convert bounding box to format `(min x, min y, max x, max y)`, i.e.,

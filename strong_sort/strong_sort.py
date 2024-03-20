@@ -14,6 +14,7 @@ from .deep.reid_model_factory import show_downloadeable_models, get_model_url, g
 from torchreid.reid.utils import FeatureExtractor
 from torchreid.reid.utils.tools import download_url
 from .reid_multibackend import ReIDDetectMultiBackend
+from gps_estimation import absolute_coordinates
 
 __all__ = ['StrongSORT']
 
@@ -23,9 +24,10 @@ class StrongSORT(object):
                  model_weights,
                  device,
                  fp16,
-                 max_dist=0.2,
+                 max_dist=0.02,
+                 max_dist_pos = 0.2,
                  max_iou_distance=0.7,
-                 max_age=70, n_init=3,
+                 max_age=30, n_init=3,
                  nn_budget=100,
                  mc_lambda=0.995,
                  ema_alpha=0.9
@@ -34,17 +36,20 @@ class StrongSORT(object):
         self.model = ReIDDetectMultiBackend(weights=model_weights, device=device, fp16=fp16)
         
         self.max_dist = max_dist
+        self.max_dist_pos = max_dist_pos
         metric = NearestNeighborDistanceMetric(
             "cosine", self.max_dist, nn_budget)
+        metric_pos = NearestNeighborDistanceMetric(
+            "euclidean", self.max_dist_pos, nn_budget)
         self.tracker = Tracker(
-            metric, max_iou_distance=max_iou_distance, max_age=max_age, n_init=n_init)
+            metric,metric_pos, max_iou_distance=max_iou_distance, max_age=max_age, n_init=n_init,_lambda = mc_lambda)
 
-    def update(self, bbox_xywh, confidences, classes, ori_img):
+    def update(self, bbox_xywh,gps_info, confidences, classes, ori_img):
         self.height, self.width = ori_img.shape[:2]
         # generate detections
-        features = self._get_features(bbox_xywh, ori_img)
+        features,gps_coords = self._get_features(bbox_xywh,gps_info, ori_img)
         bbox_tlwh = self._xywh_to_tlwh(bbox_xywh)
-        detections = [Detection(bbox_tlwh[i], conf, features[i]) for i, conf in enumerate(
+        detections = [Detection(bbox_tlwh[i], conf, features[i], gps_coords[i]) for i, conf in enumerate(
             confidences)]
 
         # run on non-maximum supression
@@ -120,7 +125,10 @@ class StrongSORT(object):
         h = int(y2 - y1)
         return t, l, w, h
 
-    def _get_features(self, bbox_xywh, ori_img):
+    def _get_features(self, bbox_xywh,gps_info, ori_img):
+        x_det = bbox_xywh[:,0]
+        y_det = bbox_xywh[:,1]
+        gps_coords = absolute_coordinates(ori_img.shape,gps_info['gimbal_heading'].to_numpy(),gps_info['altitude'].to_numpy(),gps_info['gimbal_pitch'].to_numpy(), x_det, y_det, gps_info['gps_latitude'].to_numpy(), gps_info['gps_longitude'].to_numpy(),)
         im_crops = []
         for box in bbox_xywh:
             x1, y1, x2, y2 = self._xywh_to_xyxy(box)
@@ -130,4 +138,4 @@ class StrongSORT(object):
             features = self.model(im_crops)
         else:
             features = np.array([])
-        return features
+        return (features,gps_coords)
