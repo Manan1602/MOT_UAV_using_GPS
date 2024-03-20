@@ -26,8 +26,7 @@ $ python track.py --source path/  # directory
 ```
 
 ### Images Format
->Note that the directory must have frames in one of the following formats:
->
+Note that the directory must have frames in one of the following formats:
 >- bmp
 >- jpg
 >- jpeg
@@ -38,7 +37,7 @@ $ python track.py --source path/  # directory
 >- webp
 >- mpo
 >
-> The frames **must** also be named as frame_no.{jpg} and must also be in order for the code to work properly.
+ The frames **must** also be named as frame_no.{jpg} and must also be in order for the code to work properly.
 ### GPS data format
 GPS data for each frame must be stored in a .txt file in the same directory named the same as the frame. I.e. for frame 0.jpg there must be a file 0.txt containing the GPS data
 
