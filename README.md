@@ -88,6 +88,37 @@ $ python track.py --source 0 --strong-sort-weights osnet_x0_25_market1501.pt
                                                    osnet_x1_0_msmt17.pt
                                                    ...
 ``` 
+#### Strong Sort Parameters
+The parameters for StrongSort are stored in [stong_sort/configs/strong_sort.yaml](https://github.com/Manan1602/MOT_UAV_using_GPS/blob/main/strong_sort/configs/strong_sort.yaml) and can be changed as per requirements.
+The parameters are:
+> ECC : [ bool ] 
+>> For camera motion compensation
+>
+> MC_LAMBDA : [ float (0-1) ]
+>> It is the contribution of distance in the cost matrix
+>>
+>> $cost\_matrix = \lambda * dist\_cost\_matrix  + (1-\lambda)*appearance\_cost\_matrix$
+>
+> EMA_ALPHA: [ float (0-1) ] updates appearance state in an exponential manner
+>> $e_i^t = \alpha e_i^{t-1} + (1-\alpha)f_i^t$
+>
+> MAX_DIST: [ float ] 
+>> The matching threshold for appearance. Samples with larger distance are considered an invalid match
+>
+> MAX_DIST_POS: [ float ] 
+>> Matching threshold for position.
+>
+> MAX_IOU_DISTANCE [ float ]
+>> Gating threshold. Associations with cost larger than this value are disregarded.
+>
+> MAX_AGE: [ int ]
+>> Max frames of absence before a track is deleted.
+>
+> N_INIT: [ int ]
+>> Number of frames that a track remains in initialization phase
+>
+>NN_BUDGET: [ int ]
+>> Maximum size of the appearance descriptors gallery
 
 ## Filter tracked classes
 
