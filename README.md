@@ -97,7 +97,7 @@ The parameters are:
 > MC_LAMBDA : [ float (0-1) ]
 >> It is the contribution of distance in the cost matrix
 >>
->> $cost\_ matrix = \lambda * dist\_ cost\_ matrix  + (1-\lambda)*appearance\_ cost\_ matrix$
+>> $CostMatrix = \lambda * DistCostMatrix  + (1-\lambda)*AppearanceCostMatrix$
 >
 > EMA_ALPHA: [ float (0-1) ] updates appearance state in an exponential manner
 >> $e_i^t = \alpha e_i^{t-1} + (1-\alpha)f_i^t$
