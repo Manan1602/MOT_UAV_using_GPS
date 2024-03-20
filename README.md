@@ -1,5 +1,4 @@
-# MOT using GPS
-# Yolov7 + StrongSORT with OSNet + GPS Estimation
+# MOT using GPS (Yolov7 + StrongSORT with OSNet + GPS Estimation)
 
 
 ## Introduction
