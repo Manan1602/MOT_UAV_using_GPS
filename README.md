@@ -2,7 +2,7 @@
 
 
 ## Introduction
-This is a method to track objects through UAVs. It uses [yolov7](https://github.com/WongKinYiu/yolov7) as the object detector and uses the methodoly as proposed in [Memory Maps for Video Object Detection and Tracking on UAVs](https://arxiv.org/pdf/2303.03508v1.pdf) to estimate the GPS coordinated using the metadata collected through the drones. Finally it uses [StrongSORT](https://github.com/dyhBUPT/StrongSORT) [(paper)](https://arxiv.org/pdf/2202.13514.pdf) in order to perform object reidentification and tracking. The code is augmented to use distance between the GPS coordinates obtained (in addition to appearance features) instead of on frame distances for reidentification of objects.
+This is a method to track objects through UAVs. It uses [yolov7](https://github.com/WongKinYiu/yolov7) as the object detector and uses the methodoly as proposed in [Memory Maps for Video Object Detection and Tracking on UAVs](https://arxiv.org/pdf/2303.03508v1.pdf) to estimate the GPS coordinates using the metadata collected through the drones. Finally it uses [StrongSORT](https://github.com/dyhBUPT/StrongSORT) [(paper)](https://arxiv.org/pdf/2202.13514.pdf) in order to perform object reidentification and tracking. The code is augmented to use distance between the GPS coordinates obtained (in addition to appearance features) instead of on frame distances for reidentification of objects.
 ## Before you run the tracker
 
 1. Clone the repository recursively:
