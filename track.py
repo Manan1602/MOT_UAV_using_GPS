@@ -115,6 +115,9 @@ def run(
     else:
         dataset = LoadImages(source, img_size=imgsz, stride=stride)
         nr_sources = 1
+    loader = torch.utils.data.DataLoader
+    dataloader = loader(dataset,batch_size=15)
+
     vid_path, vid_writer, txt_path = [None] * nr_sources, [None] * nr_sources, [None] * nr_sources
 
     # initialize StrongSORT
@@ -148,10 +151,10 @@ def run(
     # Run tracking
     dt, seen = [0.0, 0.0, 0.0, 0.0], 0
     curr_frames, prev_frames = [None] * nr_sources, [None] * nr_sources
-    for frame_idx, (path, im, im0s,gps_info, vid_cap) in enumerate(dataset):
+    for frame_idx, (path, im, im0s,gps_info) in enumerate(dataloader):
         s = ''
         t1 = time_synchronized()
-        im = torch.from_numpy(im).to(device)
+        im = im.to(device)
         im = im.half() if half else im.float()  # uint8 to fp16/32
         im /= 255.0  # 0 - 255 to 0.0 - 1.0
         if len(im.shape) == 3:
@@ -161,25 +164,26 @@ def run(
 
         # Inference
         visualize = increment_path(save_dir / Path(path[0]).stem, mkdir=True) if visualize else False
-        pred = model(im)
+        preds = model(im)
         t3 = time_synchronized()
         dt[1] += t3 - t2
-
         # Apply NMS
-        pred = non_max_suppression(pred[0], conf_thres, iou_thres, classes, agnostic_nms)
+        with torch.no_grad():
+            preds = non_max_suppression(preds[0], conf_thres, iou_thres, classes, agnostic_nms)
         dt[2] += time_synchronized() - t3
-        
         # Process detections
-        for i, det in enumerate(pred):  # detections per image
+        for i, det in enumerate(preds):  # detections per image
+            # print(np.shape(det))
+            # assert False, 'stop'
             seen += 1
             if webcam:  # nr_sources >= 1
-                p, im0, _ = path[i], im0s[i].copy(), dataset.count
+                p, im0, _ = path[i], im0s[i].clone(), dataset.count
                 p = Path(p)  # to Path
                 s += f'{i}: '
                 txt_file_name = p.name
                 save_path = str(save_dir / p.name) + str(i)  # im.jpg, vid.mp4, ...
             else:
-                p, im0, _ = path, im0s.copy(), getattr(dataset, 'frame', 0)
+                p, im0, _ = path[i], im0s[i].clone().detach().cpu().numpy(), getattr(dataset, 'frame', 0)
                 p = Path(p)  # to Path
                 # video file
                 if source.endswith(VID_FORMATS):
@@ -190,14 +194,14 @@ def run(
                     txt_file_name = p.parent.name  # get folder name containing current img
                     save_path = str(save_dir / p.parent.name)  # im.jpg, vid.mp4, ...
 
-            curr_frames[i] = im0
+            curr_frames[0] = im0
 
             txt_path = str(save_dir / 'tracks' / txt_file_name)  # im.txt
             s += '%gx%g ' % im.shape[2:]  # print string
             imc = im0.copy() if save_crop else im0  # for save_crop
 
             if cfg.STRONGSORT.ECC:  # camera motion compensation
-                strongsort_list[i].tracker.camera_update(prev_frames[i], curr_frames[i])
+                strongsort_list[0].tracker.camera_update(prev_frames[0], curr_frames[0])
 
             if det is not None and len(det):
                 # Rescale boxes from img_size to im0 size
@@ -214,13 +218,18 @@ def run(
 
                 # pass detections to strongsort
                 t4 = time_synchronized()
-                outputs[i] = strongsort_list[i].update(xywhs.cpu(),gps_info, confs.cpu(), clss.cpu(), im0)
+                gps= {}
+                # print('gps info')
+                for k in gps_info.keys():
+                    gps[k] = gps_info[k][0][i]
+                # assert False, 'stop'
+                outputs[0] = strongsort_list[0].update(xywhs.cpu(),gps, confs.cpu(), clss.cpu(), im0)
                 t5 = time_synchronized()
                 dt[3] += t5 - t4
 
                 # draw boxes for visualization
-                if len(outputs[i]) > 0:
-                    for j, (output, conf) in enumerate(zip(outputs[i], confs)):
+                if len(outputs[0]) > 0:
+                    for j, (output, conf) in enumerate(zip(outputs[0], confs)):
     
                         bboxes = output[0:4]
                         id = output[4]
@@ -235,7 +244,7 @@ def run(
                             # Write MOT compliant results to file
                             with open(txt_path + '.txt', 'a') as f:
                                 f.write(('%g ' * 10 + '\n') % (frame_idx + 1, id, bbox_left,  # MOT format
-                                                               bbox_top, bbox_w, bbox_h, -1, -1, -1, i))
+                                                            bbox_top, bbox_w, bbox_h, -1, -1, -1, i))
 
                         if save_vid or save_crop or show_vid:  # Add bbox to image
                             c = int(cls)  # integer class
@@ -250,7 +259,7 @@ def run(
                 print(f'{s}Done. YOLO:({t3 - t2:.3f}s), StrongSORT:({t5 - t4:.3f}s)')
 
             else:
-                strongsort_list[i].increment_ages()
+                strongsort_list[0].increment_ages()
                 print('No detections')
 
             # Stream results
@@ -261,21 +270,17 @@ def run(
             # Save results (image with detections)
             if save_vid:
                 # im0 = cv2.resize(im0,(1200,800))
-                if vid_path[i] != save_path:  # new video
-                    vid_path[i] = save_path
-                    if isinstance(vid_writer[i], cv2.VideoWriter):
-                        vid_writer[i].release()  # release previous video writer
-                    if vid_cap:  # video
-                        fps = vid_cap.get(cv2.CAP_PROP_FPS)
-                        w = int(vid_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-                        h = int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                if vid_path[0] != save_path:  # new video
+                    vid_path[0] = save_path
+                    if isinstance(vid_writer[0], cv2.VideoWriter):
+                        vid_writer[0].release()  # release previous video writer
                     else:  # stream
                         fps, w, h = 30, im0.shape[1], im0.shape[0]
                     save_path = str(Path(save_path).with_suffix('.mp4'))  # force *.mp4 suffix on results videos
-                    vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
-                vid_writer[i].write(im0)
+                    vid_writer[0] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
+                vid_writer[0].write(im0)
 
-            prev_frames[i] = curr_frames[i]
+            prev_frames[0] = curr_frames[0]
 
     # Print results
     t = tuple(x / seen * 1E3 for x in dt)  # speeds per image

@@ -12,6 +12,7 @@ This is a method to track objects through UAVs. It uses [yolov7](https://github.
 or
 
 `git clone https://github.com/Manan1602/MOT_UAV_using_GPS.git`
+
 `git submodule update --init --recursive`
 
 <!-- `pip install -r requirements.txt` -->

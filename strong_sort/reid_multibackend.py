@@ -33,17 +33,20 @@ class ReIDDetectMultiBackend(nn.Module):
             self.saved_model, self.pb, self.tflite, self.edgetpu, self.tfjs = self.model_type(w)  # get backend
         
         if self.pt:  # PyTorch
-            model_name = get_model_name(weights)
-            model_url = get_model_url(weights)
+            if 'custom' not in str(weights):
+                model_name = get_model_name(weights)
+                model_url = get_model_url(weights)
 
-            if not file_exists(weights) and model_url is not None:
-                gdown.download(model_url, str(weights), quiet=False)
-            elif file_exists(weights):
-                pass
-            elif model_url is None:
-                print('No URL associated to the chosen DeepSort weights. Choose between:')
-                show_downloadeable_models()
-                exit()
+                if not file_exists(weights) and model_url is not None:
+                    gdown.download(model_url, str(weights), quiet=False)
+                elif file_exists(weights):
+                    pass
+                elif model_url is None:
+                    print('No URL associated to the chosen DeepSort weights. Choose between:')
+                    show_downloadeable_models()
+                    exit()
+            else:
+                model_name = str(weights).rsplit('/',1)[-1].split('.')[0].replace('_custom', '')
 
             self.extractor = FeatureExtractor(
                 # get rid of dataset information DeepSort model name

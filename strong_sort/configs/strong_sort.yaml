@@ -1,6 +1,6 @@
 STRONGSORT:
   ECC: True              # activate camera motion compensation
-  MC_LAMBDA: 0.995       # matching with both appearance (1 - MC_LAMBDA) and motion cost
+  MC_LAMBDA: 0.005       # matching with both appearance (1 - MC_LAMBDA) and motion cost
   EMA_ALPHA: 0.9         # updates  appearance  state in  an exponential moving average manner
   MAX_DIST: 0.07
   MAX_DIST_POS: 0.02          # The matching threshold. Samples with larger distance are considered an invalid match

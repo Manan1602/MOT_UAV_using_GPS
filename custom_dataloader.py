@@ -73,17 +73,18 @@ class LoadImages:  # for inference
         assert self.nf > 0, f'No images or videos found in {p}. ' \
                             f'Supported formats are:\nimages: {img_formats}\nvideos: {vid_formats}'
 
-    def __iter__(self):
-        self.count = 0
-        return self
+    # def __iter__(self):
+    #     self.count = 0
+    #     return self
+    
+    def __len__(self):
+        return len(self.files)
+    
+    def __getitem__(self, index):
+        path = self.files[index]
+        gps_info = pd.read_csv(self.gps_files[index])
 
-    def __next__(self):
-        if self.count == self.nf:
-            raise StopIteration
-        path = self.files[self.count]
-        gps_info = pd.read_csv(self.gps_files[self.count])
-
-        if self.video_flag[self.count]:
+        if self.video_flag[index]:
             # Read video
             self.mode = 'video'
             ret_val, img0 = self.cap.read()
@@ -93,7 +94,7 @@ class LoadImages:  # for inference
                 if self.count == self.nf:  # last video
                     raise StopIteration
                 else:
-                    path = self.files[self.count]
+                    path = self.files[index]
                     self.new_video(path)
                     ret_val, img0 = self.cap.read()
 
@@ -102,7 +103,6 @@ class LoadImages:  # for inference
 
         else:
             # Read image
-            self.count += 1
             img0 = cv2.imread(path)  # BGR
             assert img0 is not None, 'Image Not Found ' + path
             #print(f'image {self.count}/{self.nf} {path}: ', end='')
@@ -114,4 +114,47 @@ class LoadImages:  # for inference
         img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
         img = np.ascontiguousarray(img)
 
-        return path, img, img0, gps_info, self.cap
+        gps_info = gps_info.to_dict('list')
+
+        return path, img, img0, gps_info
+
+    # def __next__(self):
+    #     if self.count == self.nf:
+    #         raise StopIteration
+    #     path = self.files[self.count]
+    #     gps_info = pd.read_csv(self.gps_files[self.count])
+
+    #     if self.video_flag[self.count]:
+    #         # Read video
+    #         self.mode = 'video'
+    #         ret_val, img0 = self.cap.read()
+    #         if not ret_val:
+    #             self.count += 1
+    #             self.cap.release()
+    #             if self.count == self.nf:  # last video
+    #                 raise StopIteration
+    #             else:
+    #                 path = self.files[self.count]
+    #                 self.new_video(path)
+    #                 ret_val, img0 = self.cap.read()
+
+    #         self.frame += 1
+    #         print(f'video {self.count + 1}/{self.nf} ({self.frame}/{self.nframes}) {path}: ', end='')
+
+    #     else:
+    #         # Read image
+    #         self.count += 1
+    #         img0 = cv2.imread(path)  # BGR
+    #         assert img0 is not None, 'Image Not Found ' + path
+    #         #print(f'image {self.count}/{self.nf} {path}: ', end='')
+
+    #     # Padded resize
+    #     img = letterbox(img0, self.img_size, stride=self.stride)[0]
+
+    #     # Convert
+    #     img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
+    #     img = np.ascontiguousarray(img)
+    #     gps_info = gps_info.to_dict()
+    #     print(gps_info)
+    #     print(type(gps_info))
+    #     return path, img, img0, gps_info.to_dict(), self.cap

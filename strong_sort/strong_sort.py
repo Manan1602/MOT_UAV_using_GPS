@@ -129,9 +129,9 @@ class StrongSORT(object):
         x_det = bbox_xywh[:,0]
         y_det = bbox_xywh[:,1]
         f = 12.5
-        if 'focal_length' in gps_info.columns:
+        if 'focal_length' in gps_info.keys():
             f = gps_info['focal_length']
-        gps_coords = absolute_coordinates(ori_img.shape,gps_info['gimbal_heading'].to_numpy(),gps_info['altitude'].to_numpy(),gps_info['gimbal_pitch'].to_numpy(), x_det, y_det, gps_info['gps_latitude'].to_numpy(), gps_info['gps_longitude'].to_numpy(),f)
+        gps_coords = absolute_coordinates(ori_img.shape,np.array(gps_info['gimbal_heading']),np.array(gps_info['altitude']),np.array(gps_info['gimbal_pitch']), x_det, y_det, np.array(gps_info['gps_latitude']), np.array(gps_info['gps_longitude']),f)
         im_crops = []
         for box in bbox_xywh:
             x1, y1, x2, y2 = self._xywh_to_xyxy(box)

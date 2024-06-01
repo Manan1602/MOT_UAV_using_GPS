@@ -77,6 +77,14 @@ def absolute_coordinates(img_shape,r: float,h:float,B:float, x_det: list[float],
     la_obj: latitude of object
     lo_obj: longitude of object
     '''
+    # print(type(B))
+    # print(B)
+    print(B.shape)
+    print(r.shape)
+    print(h.shape)
+    print(la.shape)
+    print(lo.shape)
+    
     B = np.deg2rad(B)
     r = np.deg2rad(r)
     h = h/1000 # meters  to kilometers
