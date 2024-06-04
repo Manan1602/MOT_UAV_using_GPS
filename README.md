@@ -76,7 +76,7 @@ Or for custom dataset, just place your pretrained yolo model in the root directo
 $ python track.py --source path/ --yolo-weights weights.pt --img img_size 
 ```
 
-To train your own yolov7 model refer to [This Guide](/yolov7/train_custom.md)
+To train your own yolov7 model refer to [This Guide](train_custom.md)
 
 ### StrongSORT
 
