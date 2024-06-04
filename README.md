@@ -76,6 +76,8 @@ Or for custom dataset, just place your pretrained yolo model in the root directo
 $ python track.py --source path/ --yolo-weights weights.pt --img img_size 
 ```
 
+To train your own yolov7 model refer to [This Guide](/yolov7/train_custom.md)
+
 ### StrongSORT
 
 The above applies to StrongSORT models as well. Choose a ReID model based on your needs from this ReID [model zoo](https://kaiyangzhou.github.io/deep-person-reid/MODEL_ZOO)
